@@ -1,0 +1,9 @@
+{
+  "name": "blackboard-faculty-dashboard",
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": ".",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project blackboard-faculty-dashboard --web",
+  "targets": {}
+}
