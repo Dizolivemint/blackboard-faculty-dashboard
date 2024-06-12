@@ -1,7 +1,7 @@
 import { SignJWT, importJWK, JWK, JWTPayload } from 'jose';
 
 // Retrieve the private key from environment variables
-const privateKey = process.env.PRIVATE_KEY;
+const privateKey = process.env.PRIVATE_JWK;
 
 if (!privateKey) {
   throw new Error('Private key not found in environment variables');

@@ -8,7 +8,7 @@ const ALLOWED_ROLES = [
   'urn:lti:instrole:ims/lis/Instructor',
 ];
 
-const Dashboard = () => {
+const Page = () => {
   const router = useRouter();
   const { token } = router.query;
   const [userData, setUserData] = useState<JWTClaims | null>(null);
@@ -54,4 +54,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Page;
