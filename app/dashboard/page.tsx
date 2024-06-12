@@ -1,7 +1,7 @@
 'use client'
-import { useRouter } from 'next/router';
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { JWTClaims } from './models';
+import { JWTClaims } from '@/models';
 
 const ALLOWED_ROLES = [
   'lti:role:ims/lis/Administrator',
@@ -9,8 +9,7 @@ const ALLOWED_ROLES = [
 ];
 
 const Page = () => {
-  const router = useRouter();
-  const { token } = router.query;
+  const token = useSearchParams().get('token');
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [error, setError] = useState<string | null>(null);
 
