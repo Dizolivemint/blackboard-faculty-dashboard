@@ -1,7 +1,7 @@
 'use client'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react';
-import { JWTClaims } from '@/models';
+import { JWTClaims } from '@/app/models';
 
 const ALLOWED_ROLES = [
   'lti:role:ims/lis/Administrator',

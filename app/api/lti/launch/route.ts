@@ -1,5 +1,5 @@
 import { jwtVerify, createRemoteJWKSet } from 'jose';
-import { signJwt } from '@/utils/jwt';
+import { signJwt } from '@/app/utils/jwt';
 
 const jwksUrl = process.env.JWKS_URL || '';
 if (!jwksUrl) {
