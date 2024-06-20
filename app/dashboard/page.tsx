@@ -1,4 +1,6 @@
 'use client'
+
+import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models';
@@ -38,7 +40,7 @@ const Page = () => {
   }, [token]);
 
   return (
-    <div>
+    <Suspense fallback={<div>Loading...</div>}>
       <h1>Dashboard</h1>
       {error ? (
         <p>{error}</p>
@@ -49,7 +51,7 @@ const Page = () => {
           </div>
         )
       )}
-    </div>
+    </Suspense>
   );
 };
 
