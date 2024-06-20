@@ -10,7 +10,7 @@ const ALLOWED_ROLES = [
   'urn:lti:instrole:ims/lis/Instructor',
 ];
 
-const Page = () => {
+const Dashboard = () => {
   const token = useSearchParams().get('token');
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ const Page = () => {
   }, [token]);
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <div>
       <h1>Dashboard</h1>
       {error ? (
         <p>{error}</p>
@@ -51,6 +51,14 @@ const Page = () => {
           </div>
         )
       )}
+    </div>
+  );
+};
+
+const Page: React.FC = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Dashboard />
     </Suspense>
   );
 };
