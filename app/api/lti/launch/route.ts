@@ -73,6 +73,7 @@ export async function GET(request: Request): Promise<Response> {
   authRedirectUrl.searchParams.set('response_mode', 'form_post');
   authRedirectUrl.searchParams.set('nonce', nonce);
   authRedirectUrl.searchParams.set('prompt', 'none');
+  authRedirectUrl.searchParams.set('lti_message_hint', lti_message_hint);
 
   headers.append('Location', authRedirectUrl.toString());
 
