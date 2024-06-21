@@ -1,4 +1,4 @@
-import { jwtVerify, createRemoteJWKSet } from 'jose';
+import { jwtVerify, createRemoteJWKSet, decodeProtectedHeader } from 'jose';
 import { signJwt } from '@/app/utils/jwt';
 import { randomBytes } from 'crypto';
 
@@ -98,7 +98,6 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  // Validate required parameters
   if (!state || !id_token) {
     return new Response(JSON.stringify({ message: 'Missing required parameters' }), {
       status: 400,
@@ -108,7 +107,6 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  // Parse cookies into a Map
   const cookiesHeader = request.headers.get('cookie');
   const cookies = new Map(
     cookiesHeader?.split('; ').map(cookie => {
@@ -120,7 +118,6 @@ export async function POST(request: Request): Promise<Response> {
   const savedState = cookies.get('lti_state');
   const savedNonce = cookies.get('lti_nonce');
 
-  // Validate state and nonce to prevent CSRF and replay attacks
   if (state !== savedState || !savedNonce) {
     return new Response(JSON.stringify({ message: 'Invalid state or nonce' }), {
       status: 401,
@@ -131,16 +128,27 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    const header = decodeProtectedHeader(id_token);
+    console.log('Decoded JWT header:', header);
+
     const audience = process.env.AUDIENCE || '';
     const issuer = process.env.ISSUER || '';
-    
-    // Verify the JWT received in the id_token
+
+    console.log('Audience expected:', audience);
+    console.log('Issuer expected:', issuer);
+
+    // Log JWKS keys for debugging
+    const jwksResponse = await fetch(jwksUrl);
+    const jwksJson = await jwksResponse.json();
+    console.log('JWKS keys:', jwksJson);
+
     const { payload } = await jwtVerify(id_token, JWKS, {
       issuer,
-      audience,
+      audience: audience,
     });
 
-    // Ensure nonce in JWT matches the saved nonce
+    console.log('JWT payload:', payload);
+
     if (payload.nonce !== savedNonce) {
       return new Response(JSON.stringify({ message: 'Invalid nonce' }), {
         status: 401,
@@ -150,12 +158,10 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
-    // Clear the state and nonce cookies
     const headers = new Headers();
     headers.append('Set-Cookie', 'lti_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
     headers.append('Set-Cookie', 'lti_nonce=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
 
-    // Prepare the response payload and sign it
     const responsePayload = {
       sub: payload.sub,
       name: payload.name,
@@ -164,7 +170,6 @@ export async function POST(request: Request): Promise<Response> {
 
     const signedJwt = await signJwt(responsePayload);
 
-    // Redirect to the provided redirect URL with the signed token
     const redirectUrl = new URL(dashboardUrl);
     redirectUrl.searchParams.set('token', signedJwt);
 
@@ -172,7 +177,7 @@ export async function POST(request: Request): Promise<Response> {
 
     return new Response(null, {
       status: 302,
-      headers,
+      headers: headers,
     });
   } catch (error) {
     console.error('Error during token verification:', error);
