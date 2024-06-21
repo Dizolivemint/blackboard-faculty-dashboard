@@ -8,19 +8,29 @@ if (!privateKey) {
 }
 
 // Parse the private key JSON string
-const parsedPrivateKey: JWK = JSON.parse(privateKey);
+let parsedPrivateKey: JWK;
+try {
+  parsedPrivateKey = JSON.parse(privateKey);
+} catch (error) {
+  throw new Error('Failed to parse private key from environment variables');
+}
 
 // Import the JWK
 const keyPromise = importJWK(parsedPrivateKey, 'RS256');
 
 export async function signJwt(payload: JWTPayload): Promise<string> {
-  const key = await keyPromise;
+  try {
+    const key = await keyPromise;
 
-  const jwt = await new SignJWT(payload)
-    .setProtectedHeader({ alg: 'RS256', kid: parsedPrivateKey.kid })
-    .setIssuedAt()
-    .setExpirationTime('1h')
-    .sign(key);
+    const jwt = await new SignJWT(payload)
+      .setProtectedHeader({ alg: 'RS256', kid: parsedPrivateKey.kid })
+      .setIssuedAt()
+      .setExpirationTime('1h')
+      .sign(key);
 
-  return jwt;
+    return jwt;
+  } catch (error) {
+    console.error('Error signing JWT:', error);
+    throw new Error('Failed to sign JWT');
+  }
 }
