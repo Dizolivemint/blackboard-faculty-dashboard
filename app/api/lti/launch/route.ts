@@ -2,7 +2,7 @@ import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { signJwt } from '@/app/utils/jwt';
 import { randomBytes } from 'crypto';
 
-const requiredEnvVars = ['JWKS_URL', 'CLIENT_ID', 'REDIRECT_URL', 'AUDIENCE', 'ISSUER'];
+const requiredEnvVars = ['JWKS_URL', 'CLIENT_ID', 'DASHBOARD_URL', 'AUDIENCE', 'ISSUER'];
 requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
     throw new Error(`${envVar} not found in environment variables`);
@@ -75,9 +75,9 @@ export async function POST(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const state = url.searchParams.get('state');
   const id_token = url.searchParams.get('id_token');
-  const redirectUri = process.env.REDIRECT_URL;
+  const dashboardUrl = process.env.DASHBOARD_URL;
 
-  if (!redirectUri) {
+  if (!dashboardUrl) {
     return new Response(JSON.stringify({ message: 'Redirect URL not found in environment variables' }), {
       status: 500,
       headers: {
@@ -153,7 +153,7 @@ export async function POST(request: Request): Promise<Response> {
     const signedJwt = await signJwt(responsePayload);
 
     // Redirect to the provided redirect URL with the signed token
-    const redirectUrl = new URL(redirectUri);
+    const redirectUrl = new URL(dashboardUrl);
     redirectUrl.searchParams.set('token', signedJwt);
 
     headers.append('Location', redirectUrl.toString());
