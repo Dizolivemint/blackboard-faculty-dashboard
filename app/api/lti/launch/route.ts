@@ -131,10 +131,10 @@ export async function POST(request: Request): Promise<Response> {
     const header = decodeProtectedHeader(id_token);
     console.log('Decoded JWT header:', header);
 
-    const audience = process.env.AUDIENCE || '';
+    const clientId = process.env.CLIENT_ID || '';
     const issuer = process.env.ISSUER || '';
 
-    console.log('Audience expected:', audience);
+    console.log('Audience expected:', clientId);
     console.log('Issuer expected:', issuer);
 
     // Log JWKS keys for debugging
@@ -144,7 +144,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const { payload } = await jwtVerify(id_token, JWKS, {
       issuer,
-      audience: audience,
+      audience: clientId,
     });
 
     console.log('JWT payload:', payload);
