@@ -62,12 +62,11 @@ export async function GET(request: Request): Promise<Response> {
   authRedirectUrl.searchParams.set('nonce', nonce);
   authRedirectUrl.searchParams.set('prompt', 'none');
 
+  headers.append('Location', authRedirectUrl.toString());
+
   return new Response(null, {
     status: 302,
-    headers: {
-      ...headers,
-      'Location': authRedirectUrl.toString(),
-    },
+    headers: headers,
   });
 }
 
