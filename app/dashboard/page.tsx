@@ -6,14 +6,16 @@ import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models';
 
 const ALLOWED_ROLES = [
-  'lti:role:ims/lis/Administrator',
-  'urn:lti:instrole:ims/lis/Instructor',
+  "http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator",
+  "http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator",
+  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor"
 ];
 
 const Dashboard = () => {
   const token = useSearchParams().get('token');
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [error, setError] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (token) {
