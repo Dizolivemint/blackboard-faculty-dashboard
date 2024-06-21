@@ -30,6 +30,16 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
+  // Verify that iss is a valid HTTPS URL https://blackboard.com
+  if (iss !== 'https://blackboard.com') {
+    return new Response(JSON.stringify({ message: 'Invalid issuer' }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
+
   // Generate state and nonce
   const state = randomBytes(16).toString('hex');
   const nonce = randomBytes(16).toString('hex');
@@ -50,8 +60,7 @@ export async function GET(request: Request): Promise<Response> {
   }
 
   // Ensure authUrl has the correct scheme (https)
-  const authUrl = new URL('/auth', iss);
-  authUrl.protocol = 'https';
+  const authUrl = new URL('/api/v1/gateway/oauth2/jwttoken', 'https://developer.blackboard.com');
 
   // Build the authorization redirect URL
   const authRedirectUrl = new URL(authUrl.toString());
