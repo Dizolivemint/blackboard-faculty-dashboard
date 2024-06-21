@@ -48,7 +48,10 @@ export async function GET(request: Request): Promise<Response> {
       },
     });
   }
-  const authUrl = `https://${iss}/auth`;
+  
+  // Ensure authUrl has the correct scheme (https)
+  const authUrl = new URL('/auth', iss);
+  authUrl.protocol = 'https';
 
   // Build the authorization redirect URL
   const authRedirectUrl = new URL(authUrl);
