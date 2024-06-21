@@ -1,12 +1,15 @@
 import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { signJwt } from '@/app/utils/jwt';
 import { randomBytes } from 'crypto';
-import { redirect } from 'next/dist/server/api-utils';
+
+const requiredEnvVars = ['JWKS_URL', 'CLIENT_ID', 'REDIRECT_URL', 'AUDIENCE', 'ISSUER'];
+requiredEnvVars.forEach((envVar) => {
+  if (!process.env[envVar]) {
+    throw new Error(`${envVar} not found in environment variables`);
+  }
+});
 
 const jwksUrl = process.env.JWKS_URL || '';
-if (!jwksUrl) {
-  throw new Error('JWKS URL not found in environment variables');
-}
 const JWKS_URI = new URL(jwksUrl);
 const JWKS = createRemoteJWKSet(JWKS_URI);
 
@@ -17,6 +20,7 @@ export async function GET(request: Request): Promise<Response> {
   const target_link_uri = url.searchParams.get('target_link_uri');
   const lti_message_hint = url.searchParams.get('lti_message_hint');
 
+  // Validate required query parameters
   if (!iss || !login_hint || !target_link_uri || !lti_message_hint) {
     return new Response(JSON.stringify({ message: 'Missing required query parameters' }), {
       status: 400,
@@ -26,16 +30,16 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
+  // Generate state and nonce
   const state = randomBytes(16).toString('hex');
   const nonce = randomBytes(16).toString('hex');
 
-  // Save state and nonce in cookies
+  // Set secure cookies for state and nonce
   const headers = new Headers();
-  headers.append('Set-Cookie', `lti_state=${state}; Path=/; HttpOnly; Secure`);
-  headers.append('Set-Cookie', `lti_nonce=${nonce}; Path=/; HttpOnly; Secure`);
+  headers.append('Set-Cookie', `lti_state=${state}; Path=/; HttpOnly; Secure; SameSite=Strict`);
+  headers.append('Set-Cookie', `lti_nonce=${nonce}; Path=/; HttpOnly; Secure; SameSite=Strict`);
 
   const clientId = process.env.CLIENT_ID;
-  const authUrl = `${iss}/auth`;
   if (!clientId) {
     return new Response(JSON.stringify({ message: 'Client ID not found in environment variables' }), {
       status: 500,
@@ -44,7 +48,9 @@ export async function GET(request: Request): Promise<Response> {
       },
     });
   }
+  const authUrl = `${iss}/auth`;
 
+  // Build the authorization redirect URL
   const authRedirectUrl = new URL(authUrl);
   authRedirectUrl.searchParams.set('scope', 'openid');
   authRedirectUrl.searchParams.set('response_type', 'id_token');
@@ -72,9 +78,15 @@ export async function POST(request: Request): Promise<Response> {
   const redirectUri = process.env.REDIRECT_URL;
 
   if (!redirectUri) {
-    throw new Error('Redirect URL not found in environment variables');
+    return new Response(JSON.stringify({ message: 'Redirect URL not found in environment variables' }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
+  // Validate required parameters
   if (!state || !id_token) {
     return new Response(JSON.stringify({ message: 'Missing required parameters' }), {
       status: 400,
@@ -84,12 +96,21 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  const cookies = request.headers.get('cookie');
-  const savedState = cookies?.split('; ').find(row => row.startsWith('lti_state='))?.split('=')[1];
-  const savedNonce = cookies?.split('; ').find(row => row.startsWith('lti_nonce='))?.split('=')[1];
+  // Parse cookies into a Map
+  const cookiesHeader = request.headers.get('cookie');
+  const cookies = new Map(
+    cookiesHeader?.split('; ').map(cookie => {
+      const [name, ...rest] = cookie.split('=');
+      return [name, rest.join('=')];
+    }) || []
+  );
 
-  if (state !== savedState) {
-    return new Response(JSON.stringify({ message: 'Invalid state' }), {
+  const savedState = cookies.get('lti_state');
+  const savedNonce = cookies.get('lti_nonce');
+
+  // Validate state and nonce to prevent CSRF and replay attacks
+  if (state !== savedState || !savedNonce) {
+    return new Response(JSON.stringify({ message: 'Invalid state or nonce' }), {
       status: 401,
       headers: {
         'Content-Type': 'application/json',
@@ -100,21 +121,29 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const audience = process.env.AUDIENCE || '';
     const issuer = process.env.ISSUER || '';
-    if (!audience || !issuer) {
-      throw new Error('Audience or issuer not found in environment variables');
-    }
-
+    
+    // Verify the JWT received in the id_token
     const { payload } = await jwtVerify(id_token, JWKS, {
       issuer,
       audience,
     });
 
+    // Ensure nonce in JWT matches the saved nonce
+    if (payload.nonce !== savedNonce) {
+      return new Response(JSON.stringify({ message: 'Invalid nonce' }), {
+        status: 401,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     // Clear the state and nonce cookies
     const headers = new Headers();
-    headers.append('Set-Cookie', 'lti_state=; Path=/; Max-Age=0');
-    headers.append('Set-Cookie', 'lti_nonce=; Path=/; Max-Age=0');
+    headers.append('Set-Cookie', 'lti_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
+    headers.append('Set-Cookie', 'lti_nonce=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
 
-    // Create a response JWT signed with the private key
+    // Prepare the response payload and sign it
     const responsePayload = {
       sub: payload.sub,
       name: payload.name,
@@ -123,6 +152,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const signedJwt = await signJwt(responsePayload);
 
+    // Redirect to the provided redirect URL with the signed token
     const redirectUrl = new URL(redirectUri);
     redirectUrl.searchParams.set('token', signedJwt);
 
@@ -133,6 +163,7 @@ export async function POST(request: Request): Promise<Response> {
       headers,
     });
   } catch (error) {
+    console.error('Error during token verification:', error);
     return new Response(JSON.stringify({ message: 'Invalid ID Token', error }), {
       status: 401,
       headers: {
