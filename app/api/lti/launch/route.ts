@@ -84,9 +84,7 @@ export async function GET(request: Request): Promise<Response> {
 }
 
 export async function POST(request: Request): Promise<Response> {
-  const url = new URL(request.url);
-  const state = url.searchParams.get('state');
-  const id_token = url.searchParams.get('id_token');
+  const { state, id_token } = await request.json();
   const dashboardUrl = process.env.DASHBOARD_URL;
 
   if (!dashboardUrl) {
