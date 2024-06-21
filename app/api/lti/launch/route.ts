@@ -52,7 +52,7 @@ export async function GET(request: Request) {
 
     return Response.redirect(redirectUrl.toString(), 302);
   } catch (error) {
-    return new Response(JSON.stringify({ message: 'Invalid ID Token' }), {
+    return new Response(JSON.stringify({ message: error }), {
       status: 401,
       headers: {
         'Content-Type': 'application/json',
