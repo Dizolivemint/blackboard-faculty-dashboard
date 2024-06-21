@@ -48,13 +48,13 @@ export async function GET(request: Request): Promise<Response> {
       },
     });
   }
-  
+
   // Ensure authUrl has the correct scheme (https)
   const authUrl = new URL('/auth', iss);
   authUrl.protocol = 'https';
 
   // Build the authorization redirect URL
-  const authRedirectUrl = new URL(authUrl);
+  const authRedirectUrl = new URL(authUrl.toString());
   authRedirectUrl.searchParams.set('scope', 'openid');
   authRedirectUrl.searchParams.set('response_type', 'id_token');
   authRedirectUrl.searchParams.set('client_id', clientId);
