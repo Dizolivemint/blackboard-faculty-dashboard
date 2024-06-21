@@ -8,9 +8,21 @@ if (!jwksUrl) {
 const JWKS_URI = new URL(jwksUrl);
 const JWKS = createRemoteJWKSet(JWKS_URI);
 
-export async function POST(request: Request) {
-  const body = await request.json();
-  const id_token = body.id_token;
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const iss = url.searchParams.get('iss');
+  const login_hint = url.searchParams.get('login_hint');
+  const target_link_uri = url.searchParams.get('target_link_uri');
+  const lti_message_hint = url.searchParams.get('lti_message_hint');
+
+  if (!iss || !login_hint || !target_link_uri || !lti_message_hint) {
+    return new Response(JSON.stringify({ message: 'Missing required query parameters' }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
 
   try {
     const audience = process.env.AUDIENCE || '';
@@ -18,10 +30,9 @@ export async function POST(request: Request) {
     if (!audience || !issuer) {
       throw new Error('Audience or issuer not found in environment variables');
     }
-    const { payload } = await jwtVerify(id_token, JWKS, {
-      issuer,
-      audience,
-    });
+
+    // Verifying the lti_message_hint token
+    const { payload } = await jwtVerify(lti_message_hint, JWKS, { issuer, audience });
 
     // Create a response JWT signed with the private key
     const responsePayload = {
@@ -41,6 +52,11 @@ export async function POST(request: Request) {
 
     return Response.redirect(redirectUrl.toString(), 302);
   } catch (error) {
-    return Response.json({ message: 'Invalid ID Token' }, { status: 401 });
+    return new Response(JSON.stringify({ message: 'Invalid ID Token' }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
   }
 }
