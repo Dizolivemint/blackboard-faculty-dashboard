@@ -13,7 +13,13 @@ export interface JWTClaims extends LTIRoles {
   name: string;
   admin: boolean;
   'https://purl.imsglobal.org/spec/lti/claim/roles': string[];
+  roles: string[];
   'https://purl.imsglobal.org/spec/lti/claim/context': {
+    id: string;
+    label: string;
+    title: string;
+  };
+  context: {
     id: string;
     label: string;
     title: string;
@@ -21,5 +27,9 @@ export interface JWTClaims extends LTIRoles {
   'https://purl.imsglobal.org/spec/lti/claim/resource_link': {
     id: string;
     title: string;
+  };
+  lis: {
+    person_sourcedid: string,
+    course_section_sourcedid: string
   };
 }

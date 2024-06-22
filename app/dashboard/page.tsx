@@ -1,7 +1,7 @@
-'use client'
+'use client';
 
 import React, { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models';
 
@@ -16,18 +16,14 @@ const Dashboard = () => {
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
     if (token) {
-      // Save the token in localStorage or use it directly
       localStorage.setItem('jwtToken', token as string);
 
       try {
-        // Decode the token to extract user information
         const user = JSON.parse(atob((token as string).split('.')[1]));
-        
-        // Check if the user has one of the allowed roles
-        const roles: Array<string> = user['https://purl.imsglobal.org/spec/lti/claim/roles'];
+
+        const roles: Array<string> = user.roles;
         const hasAllowedRole = roles && roles.some(role => ALLOWED_ROLES.includes(role));
 
         if (!hasAllowedRole) {
@@ -49,7 +45,20 @@ const Dashboard = () => {
       ) : (
         userData && (
           <div>
-            <p>Welcome, {userData.name}</p>
+            <h1>Welcome 👋, {userData.name}</h1>
+            <h2>Roles</h2>
+            <ul>
+              {userData.roles.map((role, index) => (
+                <li key={index}>{role}</li>
+              ))}
+            </ul>
+            <h2>Context</h2>
+            <p>ID: {userData.context.id}</p>
+            <p>Label: {userData.context.label}</p>
+            <p>Title: {userData.context.title}</p>
+            <h2>LIS</h2>
+            <p>Person SourcedID: {userData.lis?.person_sourcedid}</p>
+            <p>Course Section SourcedID: {userData.lis?.course_section_sourcedid}</p>
           </div>
         )
       )}

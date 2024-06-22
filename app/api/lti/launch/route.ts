@@ -152,9 +152,9 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const roles = payload['https://purl.imsglobal.org/spec/lti/claim/roles'];
-    const messageType = payload['https://purl.imsglobal.org/spec/lti/claim/message_type'];
     const name = payload.name;
     const lis = payload['https://purl.imsglobal.org/spec/lti/claim/lis'];
+    const context = payload['https://purl.imsglobal.org/spec/lti/claim/context'];
 
     const headers = new Headers();
     headers.append('Set-Cookie', 'lti_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
@@ -162,10 +162,10 @@ export async function POST(request: Request): Promise<Response> {
 
     const responsePayload = {
       sub: payload.sub,
-      name: name,
-      roles: roles,
-      messageType: messageType,
-      lis: lis,
+      name,
+      roles,
+      lis,
+      context
     };
 
     const signedJwt = await signJwt(responsePayload);
