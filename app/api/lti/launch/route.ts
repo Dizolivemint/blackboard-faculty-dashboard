@@ -2,7 +2,7 @@ import { jwtVerify, createRemoteJWKSet, decodeProtectedHeader } from 'jose';
 import { signJwt } from '@/app/utils/jwt';
 import { randomBytes } from 'crypto';
 
-const requiredEnvVars = ['JWKS_URL', 'CLIENT_ID', 'DASHBOARD_URL', 'AUDIENCE', 'ISSUER'];
+const requiredEnvVars = ['JWKS_URL', 'CLIENT_ID', 'DASHBOARD_URL', 'ISSUER'];
 requiredEnvVars.forEach((envVar) => {
   if (!process.env[envVar]) {
     throw new Error(`${envVar} not found in environment variables`);
@@ -20,7 +20,6 @@ export async function GET(request: Request): Promise<Response> {
   const target_link_uri = url.searchParams.get('target_link_uri');
   const lti_message_hint = url.searchParams.get('lti_message_hint');
 
-  // Validate required query parameters
   if (!iss || !login_hint || !target_link_uri || !lti_message_hint) {
     return new Response(JSON.stringify({ message: 'Missing required query parameters' }), {
       status: 400,
@@ -30,7 +29,6 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
-  // Verify that iss is a valid HTTPS URL https://blackboard.com
   if (iss !== 'https://blackboard.com') {
     return new Response(JSON.stringify({ message: 'Invalid issuer' }), {
       status: 401,
@@ -40,11 +38,9 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
-  // Generate state and nonce
   const state = randomBytes(16).toString('hex');
   const nonce = randomBytes(16).toString('hex');
 
-  // Set secure cookies for state and nonce
   const headers = new Headers();
   headers.append('Set-Cookie', `lti_state=${state}; Path=/; HttpOnly; Secure; SameSite=Strict`);
   headers.append('Set-Cookie', `lti_nonce=${nonce}; Path=/; HttpOnly; Secure; SameSite=Strict`);
@@ -59,10 +55,8 @@ export async function GET(request: Request): Promise<Response> {
     });
   }
 
-  // Ensure authUrl has the correct scheme (https)
   const authUrl = new URL('/api/v1/gateway/oauth2/jwttoken', 'https://developer.blackboard.com');
 
-  // Build the authorization redirect URL
   const authRedirectUrl = new URL(authUrl.toString());
   authRedirectUrl.searchParams.set('scope', 'openid');
   authRedirectUrl.searchParams.set('response_type', 'id_token');
@@ -137,7 +131,6 @@ export async function POST(request: Request): Promise<Response> {
     console.log('Audience expected:', clientId);
     console.log('Issuer expected:', issuer);
 
-    // Log JWKS keys for debugging
     const jwksResponse = await fetch(jwksUrl);
     const jwksJson = await jwksResponse.json();
     console.log('JWKS keys:', jwksJson);
@@ -158,14 +151,21 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
+    const roles = payload['https://purl.imsglobal.org/spec/lti/claim/roles'];
+    const messageType = payload['https://purl.imsglobal.org/spec/lti/claim/message_type'];
+    const name = payload.name;
+    const lis = payload['https://purl.imsglobal.org/spec/lti/claim/lis'];
+
     const headers = new Headers();
     headers.append('Set-Cookie', 'lti_state=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
     headers.append('Set-Cookie', 'lti_nonce=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict');
 
     const responsePayload = {
       sub: payload.sub,
-      name: payload.name,
-      admin: payload.admin,
+      name: name,
+      roles: roles,
+      messageType: messageType,
+      lis: lis,
     };
 
     const signedJwt = await signJwt(responsePayload);
