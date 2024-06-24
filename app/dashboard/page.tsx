@@ -4,12 +4,10 @@ import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models';
+import jwt from 'jsonwebtoken';
+import { ALLOWED_ROLES } from '@/app/config';
 
-const ALLOWED_ROLES = [
-  "http://purl.imsglobal.org/vocab/lis/v2/system/person#Administrator",
-  "http://purl.imsglobal.org/vocab/lis/v2/membership#Administrator",
-  "http://purl.imsglobal.org/vocab/lis/v2/institution/person#Instructor"
-];
+const publicKey = process.env.PUBLIC_JWK || '';
 
 const Dashboard = () => {
   const token = useSearchParams().get('token');
@@ -17,10 +15,20 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!publicKey) {
+      setError('Public JWK not found in environment variables');
+      return;
+    }
     if (token) {
       localStorage.setItem('jwtToken', token as string);
 
       try {
+        const verified = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+        if (!verified) {
+          setError('Invalid token.');
+          return;
+        }
+
         const user = JSON.parse(atob((token as string).split('.')[1]));
 
         const roles: Array<string> = user.roles;
