@@ -49,7 +49,7 @@ const Dashboard = () => {
 
   const fetchGrades = async (token: string, courseCode: string) => {
     try {
-      const response = await fetch('/api/grades', {
+      const response = await fetch('/api/grades/get', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
