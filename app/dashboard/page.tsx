@@ -3,7 +3,7 @@
 import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { JWTClaims } from '@/app/models';
+import { JWTClaims } from '@/app/models/jwt';
 import jwt from 'jsonwebtoken';
 import { ALLOWED_ROLES } from '@/app/config';
 

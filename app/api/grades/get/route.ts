@@ -1,5 +1,6 @@
 import { verifyJwt } from '@/app/utils/jwt';
 import { ALLOWED_ROLES } from '@/app/config';
+import Blackboard from '@/app/integrations/blackboard';
 
 const BB_API_URL = process.env.AUDIENCE || '';
 
@@ -39,9 +40,11 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
-    // Make the fetch request to get the list of grades
-    // 1. Get course ID
-    const courseId = await getCourseId(course_section_sourcedid);
+    const blackboard = Blackboard.getInstance();
+    await blackboard.init();
+
+    // Get course ID
+    const courseId = await blackboard.getCourseId(course_section_sourcedid);
     if (!courseId) {
       return new Response(JSON.stringify({ message: 'Course ID not found' }), {
         status: 404,
@@ -51,11 +54,11 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
-    // 2. Get overall grade and final grade column IDs
-    const overallColumnId = await getGradeColumnId(courseId, 'Overall Grade');
-    const finalColumnId = await getGradeColumnId(courseId, 'Final Grade');
+    // Get overall grade and final grade column IDs
+    const overallColumnId = await blackboard.getGradeColumnId(courseId, 'Overall Grade');
+    const finalColumnId = await blackboard.getGradeColumnId(courseId, 'Final Grade');
     
-    // 4. Get overall grade and final grade column rows
+    // Get overall grade and final grade column rows
     if (!overallColumnId || !finalColumnId) {
       return new Response(JSON.stringify({ message: 'Grade column ID not found' }), {
         status: 404,
@@ -64,12 +67,24 @@ export async function POST(request: Request): Promise<Response> {
         },
       });
     }
-    const overallGradeColumnRows = await getOverallGradeColumnRows(courseId, overallColumnId);
-    const finalGradeColumnRows = await getOverallGradeColumnRows(courseId, finalColumnId);
+    const overallResponse = await blackboard.getGradeColumnUsers(courseId, overallColumnId);
+    const finalResponse = await blackboard.getGradeColumnUsers(courseId, finalColumnId);
+
+    if (!overallResponse || !finalResponse) {
+      return new Response(JSON.stringify({ message: 'No grades found' }), {
+        status: 404,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
+    const overall = overallResponse.results;
+    const final = finalResponse.results;
 
     const grades = {
-      overall: overallGradeColumnRows,
-      final: finalGradeColumnRows,
+      overall,
+      final
     };
 
     return new Response(JSON.stringify(grades), {
@@ -86,87 +101,5 @@ export async function POST(request: Request): Promise<Response> {
         'Content-Type': 'application/json',
       },
     });
-  }
-}
-
-async function getCourseId(course_section_sourcedid: string): Promise<string | void> {
-  try {
-    const response = await fetch(`${BB_API_URL}/learn/api/public/v3/courses?courseId=$${course_section_sourcedid}&fields=id`);
-    const data = await response.json();
-    return data.id;
-  } catch (error) {
-    console.error('Error getting course ID:', error);
-    return
-  }
-}
-
-async function getGradeColumnId(courseId: string, title: string): Promise<string | void> {
-  // const exampleResponse = {
-  //   "results": [
-  //     {
-  //       "id": "_1147_1",
-  //       "name": "Overall Grade"
-  //     }
-  //   ]
-  // }
-  try {
-    const response = await fetch(`${BB_API_URL}/learn/api/public/v1/courses/${courseId}/gradebook/columns?name=${title}&fields=name,id`);
-    const data = await response.json();
-    return data.results[0].id;
-  } catch (error) {
-    console.error('Error getting overall grade column:', error);
-    return
-  }
-}
-
-interface GradeColumnRows {
-    "userId": string,
-    "columnId": string,
-    "status": string,
-    "displayGrade": {
-      "scaleType": string,
-      "score": number,
-      "possible": number,
-      "text": string
-    },
-    "text": string,
-    "score": number,
-    "overridden": string,
-    "exempt": boolean,
-    "changeIndex": number,
-    "firstRelevantDate": string,
-    "lastRelevantDate": string,
-  }
-
-async function getOverallGradeColumnRows(courseId: string, columnId: string): Promise<Array<GradeColumnRows> | void> {
-  // const exampleResponse = {
-    // "results": [
-    //   {
-    //     "userId": "_102_1",
-    //     "columnId": "_5839_1",
-    //     "status": "Graded",
-    //     "displayGrade": {
-    //       "scaleType": "Tabular",
-    //       "score": 70.00000,
-    //       "possible": 100.000000000000000,
-    //       "text": "C-"
-    //     },
-    //     "text": "C-",
-    //     "score": 70.00000,
-    //     "overridden": "2024-04-01T18:11:44.745Z",
-    //     "exempt": false,
-    //     "changeIndex": 128935,
-    //     "firstRelevantDate": "2024-04-01T18:11:44.745Z",
-    //     "lastRelevantDate": "2024-04-01T18:11:44.745Z"
-    //   }
-    // ]
-  // }
-  try {
-    const response = await fetch(`${BB_API_URL}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users`);
-    const data = await response.json();
-    return data.results;
-  } catch (error) {
-    console.error('Error getting overall grade column rows:', error);
-    return
   }
 }
