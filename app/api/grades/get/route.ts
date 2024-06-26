@@ -5,9 +5,9 @@ import Blackboard from '@/app/integrations/blackboard';
 const BB_API_URL = process.env.AUDIENCE || '';
 
 export async function POST(request: Request): Promise<Response> {
-  const { token, course_section_sourcedid } = await request.json();
+  const { token, courseCode } = await request.json();
 
-  if (!token || !course_section_sourcedid) {
+  if (!token || !courseCode) {
     return new Response(JSON.stringify({ message: 'Missing required parameters' }), {
       status: 400,
       headers: {
@@ -44,7 +44,7 @@ export async function POST(request: Request): Promise<Response> {
     await blackboard.init();
 
     // Get course ID
-    const courseId = await blackboard.getCourseId(course_section_sourcedid);
+    const courseId = await blackboard.getCourseId(courseCode);
     if (!courseId) {
       return new Response(JSON.stringify({ message: 'Course ID not found' }), {
         status: 404,
@@ -84,7 +84,8 @@ export async function POST(request: Request): Promise<Response> {
 
     const grades = {
       overall,
-      final
+      final,
+      courseId
     };
 
     return new Response(JSON.stringify(grades), {

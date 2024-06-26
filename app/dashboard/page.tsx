@@ -4,16 +4,16 @@ import React, { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models/jwt';
-import jwt from 'jsonwebtoken';
 import { ALLOWED_ROLES } from '@/app/config';
 import { GradebookColumnUser } from '@/app/models/blackboard';
 
 const Dashboard = () => {
   const token = useSearchParams().get('token');
   const [userData, setUserData] = useState<JWTClaims | null>(null);
-  const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser> }| null>(null);
+  const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string }| null>(null);
   const [students, setStudents] = useState<Array<GradebookColumnUser>>([]);
   const [error, setError] = useState<string | null>(null);
+  const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -21,7 +21,7 @@ const Dashboard = () => {
         localStorage.setItem('jwtToken', token as string);
 
         try {
-          const user = JSON.parse(atob((token as string).split('.')[1]));
+          const user: JWTClaims = JSON.parse(atob((token as string).split('.')[1]));
 
           const roles: Array<string> = user.roles;
           const hasAllowedRole = roles && roles.some(role => ALLOWED_ROLES.includes(role));
@@ -30,7 +30,7 @@ const Dashboard = () => {
             setError('Access denied. You do not have the required role to access this dashboard.');
           } else {
             setUserData(user);
-            await fetchGrades(token, user.lis.course_section_sourcedid);
+            await fetchGrades(token, user.context.label);
           }
         } catch (e) {
           setError('Invalid token.');
@@ -41,7 +41,13 @@ const Dashboard = () => {
     verifyAndFetchData();
   }, [token]);
 
-  const fetchGrades = async (token: string, courseSectionSourcedid: string) => {
+  useEffect(() => {
+    if (grades) {
+      console.log(`fetch students for ${grades.courseId}`);
+    }
+  }, [grades])
+
+  const fetchGrades = async (token: string, courseCode: string) => {
     try {
       const response = await fetch('/api/grades', {
         method: 'POST',
@@ -50,7 +56,7 @@ const Dashboard = () => {
         },
         body: JSON.stringify({
           token,
-          course_section_sourcedid: courseSectionSourcedid,
+          courseCode,
         }),
       });
 

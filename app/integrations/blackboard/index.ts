@@ -181,9 +181,9 @@ class Blackboard {
     return result.results.length > 0 ? result : null;
   }
 
-  public async getCourseId(course_section_sourcedid: string): Promise<string | void> {
+  public async getCourseId(courseCode: string): Promise<string | void> {
     try {
-      const data = await this.getCourses({ courseId: course_section_sourcedid });
+      const data = await this.getCourses({ courseId: courseCode });
       const { results } = data;
       return results[0].id;
     } catch (error) {
