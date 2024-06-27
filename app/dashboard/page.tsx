@@ -128,8 +128,8 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
               key={index}
               studentName={grade.userId}
               userId={grade.userId}
-              overallGrade={grade.displayGrade.score}
-              finalGrade={finalGrades[index].displayGrade.score}
+              overallGrade={grade.displayGrade?.score}
+              finalGrade={finalGrades[index].displayGrade?.score}
             />
           ))}
         </tbody>
@@ -141,17 +141,17 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
   );
 };
 
-const StudentGradeRow = ({ studentName, userId, overallGrade, finalGrade }: { studentName: string; userId: string; overallGrade: number, finalGrade: number }) => {
+const StudentGradeRow = ({ studentName, userId, overallGrade, finalGrade }: { studentName: string; userId: string; overallGrade: number | undefined, finalGrade: number | undefined }) => {
   return (
     <tr className="block-grade-submission-tr odd last">
       <td className="px-6 py-4 whitespace-nowrap">
         <input type="hidden" name="student" value={userId} />{studentName}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        {overallGrade}
+        {overallGrade || '-'}
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <input className="border rounded px-2 py-1" id={`finalgrade_${userId}`} type="text" name={`finalgrade_${userId}`} size={5} value={finalGrade}/>
+        {finalGrade || "-"}
       </td>
     </tr>
   );
