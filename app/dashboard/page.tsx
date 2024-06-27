@@ -236,7 +236,7 @@ const StudentGradeRow = ({ firstName, lastName, overallGrade, finalGrade }: { fi
   return (
     <tr>
       <td>
-        <input type="hidden" name="student" value={name} />{firstName}&nbsp;{lastName}
+        <input type="hidden" name="student" value={`${firstName}&nbsp;${lastName}`} />{firstName}&nbsp;{lastName}
       </td>
       <td>
         {overallGrade !== undefined ? overallGrade : '-'}
