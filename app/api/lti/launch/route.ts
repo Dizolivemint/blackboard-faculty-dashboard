@@ -122,18 +122,8 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
-    const header = decodeProtectedHeader(id_token);
-    console.log('Decoded JWT header:', header);
-
     const clientId = process.env.CLIENT_ID || '';
     const issuer = process.env.ISSUER || '';
-
-    console.log('Audience expected:', clientId);
-    console.log('Issuer expected:', issuer);
-
-    const jwksResponse = await fetch(jwksUrl);
-    const jwksJson = await jwksResponse.json();
-    console.log('JWKS keys:', jwksJson);
 
     const { payload } = await jwtVerify(id_token, JWKS, {
       issuer,
