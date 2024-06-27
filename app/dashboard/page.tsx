@@ -80,6 +80,7 @@ const Dashboard = () => {
   const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<GradebookColumnUser>>([]);
+  const [expireTime, setExpireTime] = useState<number>(0);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -91,6 +92,10 @@ const Dashboard = () => {
 
           const roles: Array<string> = user.roles;
           const hasAllowedRole = roles && roles.some(role => ALLOWED_ROLES.includes(role));
+
+          const currentTime = Math.floor(Date.now() / 1000);
+          const expireTime = user.exp;
+          setExpireTime(expireTime);
 
           if (!hasAllowedRole) {
             setError('Access denied. You do not have the required role to access this dashboard.');
@@ -106,6 +111,21 @@ const Dashboard = () => {
 
     verifyAndFetchData();
   }, [token]);
+
+  useEffect(() => {
+    if (expireTime) {
+      const interval = setInterval(() => {
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (currentTime >= expireTime) {
+          setError('Access token has expired. Close this tab and relaunch the tool.');
+          clearInterval(interval);
+        }
+      }, 1000);
+
+      return () => clearInterval(interval);
+    }
+  }, [expireTime]);
 
   const fetchGrades = async (token: string, courseCode: string) => {
     try {
@@ -166,6 +186,7 @@ const Dashboard = () => {
             <h1>Welcome 👋, {userData.name}</h1>
             <p>Label: {userData.context.label}</p>
             <p>Title: {userData.context.title}</p>
+            <p>Time left: {(expireTime - Date.now()) / 1000}</p>
             {grades && (
               <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} />
             )}
