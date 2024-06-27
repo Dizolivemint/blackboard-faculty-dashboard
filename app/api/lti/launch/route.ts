@@ -140,8 +140,6 @@ export async function POST(request: Request): Promise<Response> {
       audience: clientId,
     });
 
-    console.log('JWT payload:', payload);
-
     if (payload.nonce !== savedNonce) {
       return new Response(JSON.stringify({ message: 'Invalid nonce' }), {
         status: 401,
