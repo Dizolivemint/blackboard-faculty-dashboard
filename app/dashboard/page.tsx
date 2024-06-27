@@ -81,6 +81,7 @@ const Dashboard = () => {
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<Array<UserResponse>>([]);
   const [expireTime, setExpireTime] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -116,7 +117,7 @@ const Dashboard = () => {
     if (expireTime) {
       const interval = setInterval(() => {
         const currentTime = Math.floor(Date.now() / 1000);
-
+        setTimeLeft(expireTime - currentTime);
         if (currentTime >= expireTime) {
           setError('Access token has expired. Close this tab and relaunch the tool.');
           clearInterval(interval);
@@ -146,6 +147,9 @@ const Dashboard = () => {
 
       const data = await response.json();
       setGrades(data);
+      for (const grade of data.overall) {
+        fetchUser(token, grade.userId);
+      }
     } catch (error) {
       setError(`Error fetching grades: ${error}`);
     }
@@ -186,7 +190,7 @@ const Dashboard = () => {
             <h1>Welcome 👋, {userData.name}</h1>
             <p>Label: {userData.context.label}</p>
             <p>Title: {userData.context.title}</p>
-            <p>Time left: {(expireTime - Date.now()) / 1000}</p>
+            <p>Time left: {timeLeft}</p>
             {grades && (
               <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users}/>
             )}
