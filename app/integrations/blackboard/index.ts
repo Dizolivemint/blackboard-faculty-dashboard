@@ -217,9 +217,9 @@ class Blackboard {
     lastRelevantDate?: string;  // The last relevant date for search criteria
     lastRelevantDateCompare?: 'lessThan' | 'greaterOrEqual';  // Compare value for lastRelevantDate
     fields?: string;  // A comma-delimited list of fields to include in the response
-} = {}): Promise<GradebookColumnUserResponse | void> {
+} | null = null): Promise<GradebookColumnUserResponse | void> {
     const queryString = params ? `?${qs.stringify(params)}` : ''
-    const url = `${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users${queryString}`;
+    const url = `https://${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users${queryString}`;
     let result = await this.fetchFromBlackboard(url);
     while (result.paging?.nextPage) {
       const nextPageUrl = `https://${this.baseUrl}${result.paging.nextPage}`;
@@ -245,7 +245,7 @@ class Blackboard {
     params: { fields?: string } = {}
   ): Promise<GradebookColumnUserUpdateResponse | void> {
     const queryString = params ? `?${qs.stringify(params)}` : ''
-    const url =`${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users/${userId}`
+    const url =`https://${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users/${userId}`
     return this.fetchFromBlackboard(url, 'PATCH', input);
   }
 }
