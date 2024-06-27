@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models/jwt';
 import { ALLOWED_ROLES } from '@/app/config';
-import { GradebookColumnUser } from '@/app/models/blackboard';
+import { GradebookColumnUser, UserResponse } from '@/app/models/blackboard';
 import styled, { keyframes } from 'styled-components';
 
 const fadeIn = keyframes`
@@ -79,7 +79,7 @@ const Dashboard = () => {
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<Array<GradebookColumnUser>>([]);
+  const [users, setUsers] = useState<Array<UserResponse>>([]);
   const [expireTime, setExpireTime] = useState<number>(0);
 
   useEffect(() => {
@@ -197,7 +197,7 @@ const Dashboard = () => {
   );
 };
 
-const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser> }) => {
+const SubmitGrade = ({ overallGrades, finalGrades, users }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: Array<UserResponse> }) => {
   return (
     <div>
       <SelectContainer>
@@ -217,8 +217,8 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
           {overallGrades.map((grade, index) => (
             <StudentGradeRow
               key={index}
-              firstName={users.length > 0 ? users.find(user => user.id === grade.userId)?.name.given: grade.userId}
-              lastName={users.length > 0 ? users.find(user => user.id === grade.userId)?.name.family : grade.userId}
+              firstName={users.find(user => user.id === grade.userId)?.name.given || grade.userId}
+              lastName={users.find(user => user.id === grade.userId)?.name.family || grade.userId}
               overallGrade={grade.displayGrade?.score}
               finalGrade={finalGrades.find(finalGrade => finalGrade.userId === grade.userId)?.displayGrade?.score}
             />
