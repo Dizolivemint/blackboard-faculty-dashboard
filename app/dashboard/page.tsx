@@ -79,7 +79,7 @@ const Dashboard = () => {
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<Array<UserResponse>>([]);
+  const [users, setUsers] = useState<{ [key: string]: UserResponse }>({});
   const [expireTime, setExpireTime] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
@@ -147,9 +147,10 @@ const Dashboard = () => {
 
       const data = await response.json();
       setGrades(data);
-      for (const grade of data.overall) {
-        fetchUser(token, grade.userId);
-      }
+
+      // Fetch user details in parallel
+      const userIds = data.overall.map((grade: GradebookColumnUser) => grade.userId);
+      await Promise.all(userIds.map(userId => fetchUser(token, userId)));
     } catch (error) {
       setError(`Error fetching grades: ${error}`);
     }
@@ -173,7 +174,7 @@ const Dashboard = () => {
       }
 
       const data = await response.json();
-      setUsers([...users, data]);
+      setUsers(prevUsers => ({ ...prevUsers, [userId]: data }));
     } catch (error) {
       setError(`Error fetching user: ${error}`);
     }
@@ -201,7 +202,7 @@ const Dashboard = () => {
   );
 };
 
-const SubmitGrade = ({ overallGrades, finalGrades, users }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: Array<UserResponse> }) => {
+const SubmitGrade = ({ overallGrades, finalGrades, users }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse } }) => {
   return (
     <div>
       <SelectContainer>
@@ -221,8 +222,8 @@ const SubmitGrade = ({ overallGrades, finalGrades, users }: { overallGrades: Arr
           {overallGrades.map((grade, index) => (
             <StudentGradeRow
               key={index}
-              firstName={users.find(user => user.id === grade.userId)?.name.given || grade.userId}
-              lastName={users.find(user => user.id === grade.userId)?.name.family || grade.userId}
+              firstName={users[grade.userId]?.name.given || grade.userId}
+              lastName={users[grade.userId]?.name.family || ''}
               overallGrade={grade.displayGrade?.score}
               finalGrade={finalGrades.find(finalGrade => finalGrade.userId === grade.userId)?.displayGrade?.score}
             />
@@ -240,7 +241,7 @@ const StudentGradeRow = ({ firstName, lastName, overallGrade, finalGrade }: { fi
   return (
     <tr>
       <td>
-        <input type="hidden" name="student" value={`${firstName}&nbsp;${lastName}`} />{firstName}&nbsp;{lastName}
+        <input type="hidden" name="student" value={`${firstName} ${lastName}`} />{firstName} {lastName}
       </td>
       <td>
         {overallGrade !== undefined ? overallGrade : '-'}
