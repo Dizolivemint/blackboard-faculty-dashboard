@@ -188,7 +188,7 @@ const Dashboard = () => {
             <p>Title: {userData.context.title}</p>
             <p>Time left: {(expireTime - Date.now()) / 1000}</p>
             {grades && (
-              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} />
+              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users}/>
             )}
           </div>
         )
