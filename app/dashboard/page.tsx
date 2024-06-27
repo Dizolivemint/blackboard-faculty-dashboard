@@ -128,8 +128,8 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
               key={index}
               studentName={grade.userId}
               userId={grade.userId}
-              overallGrade={grade.score}
-              finalGrade={finalGrades[index].score}
+              overallGrade={grade.displayGrade.score}
+              finalGrade={finalGrades[index].displayGrade.score}
             />
           ))}
         </tbody>
