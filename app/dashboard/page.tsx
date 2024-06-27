@@ -80,19 +80,8 @@ const Dashboard = () => {
         userData && (
           <div>
             <h1>Welcome 👋, {userData.name}</h1>
-            <h2>Roles</h2>
-            <ul>
-              {userData.roles.map((role, index) => (
-                <li key={index}>{role}</li>
-              ))}
-            </ul>
-            <h2>Context</h2>
-            <p>ID: {userData.context.id}</p>
             <p>Label: {userData.context.label}</p>
             <p>Title: {userData.context.title}</p>
-            <h2>LIS</h2>
-            <p>Person SourcedID: {userData.lis?.person_sourcedid}</p>
-            <p>Course Section SourcedID: {userData.lis?.course_section_sourcedid}</p>
             {grades && (
               <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} />
             )}
@@ -105,24 +94,27 @@ const Dashboard = () => {
 
 const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser> }) => {
   return (
-    <div>
-      <input name="courseid" type="hidden" value="14157" />
+    <div className='flex flex-col items-center'>
       <div className="box py-3">
         <select id="block-grade-submission-populategrade" className="select custom-select menupopulategrade" name="populategrade">
           <option selected={true} value="">Populate with overall grade...</option>
         </select>
       </div>
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
-          <tr className="top">
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              First name / Last name
+      <table className="table-auto border-separate border-spacing-2 border border-slate-500">
+        <thead>
+          <tr>
+            <th className='border border-slate-600'>
+              Name
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Grade</th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Final Grade</th>
+            <th className='border border-slate-600'>
+              Overall Grade
+            </th>
+            <th className='border border-slate-600'>
+              Final Grade
+            </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody>
           {overallGrades.map((grade, index) => (
             <StudentGradeRow
               key={index}
@@ -143,14 +135,14 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
 
 const StudentGradeRow = ({ studentName, userId, overallGrade, finalGrade }: { studentName: string; userId: string; overallGrade: number | undefined, finalGrade: number | undefined }) => {
   return (
-    <tr className="block-grade-submission-tr odd last">
-      <td className="px-6 py-4 whitespace-nowrap">
+    <tr>
+      <td className='border border-slate-700'>
         <input type="hidden" name="student" value={userId} />{studentName}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className='border border-slate-700'>
         {overallGrade || '-'}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap">
+      <td className='border border-slate-700'>
         {finalGrade || "-"}
       </td>
     </tr>
