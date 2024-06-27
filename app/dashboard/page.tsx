@@ -217,8 +217,8 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
           {overallGrades.map((grade, index) => (
             <StudentGradeRow
               key={index}
-              firstName={users.find(user => user.id === grade.userId)?.name.given}
-              lastName={users.find(user => user.id === grade.userId)?.name.family}
+              firstName={users.length > 0 ? users.find(user => user.id === grade.userId)?.name.given: grade.userId}
+              lastName={users.length > 0 ? users.find(user => user.id === grade.userId)?.name.family : grade.userId}
               overallGrade={grade.displayGrade?.score}
               finalGrade={finalGrades.find(finalGrade => finalGrade.userId === grade.userId)?.displayGrade?.score}
             />
