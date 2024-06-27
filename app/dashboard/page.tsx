@@ -149,7 +149,7 @@ const Dashboard = () => {
       setGrades(data);
 
       // Fetch user details in parallel
-      const userIds = data.overall.map((grade: GradebookColumnUser) => grade.userId);
+      const userIds: Array<string> = data.overall.map((grade: GradebookColumnUser) => grade.userId);
       await Promise.all(userIds.map(userId => fetchUser(token, userId)));
     } catch (error) {
       setError(`Error fetching grades: ${error}`);
