@@ -6,14 +6,79 @@ import { useEffect, useState } from 'react';
 import { JWTClaims } from '@/app/models/jwt';
 import { ALLOWED_ROLES } from '@/app/config';
 import { GradebookColumnUser } from '@/app/models/blackboard';
+import styled, { keyframes } from 'styled-components';
+
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const Container = styled.div`
+  border: 2px solid #ccc;
+  padding: 20px;
+  margin: 20px auto;
+  max-width: 800px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  animation: ${fadeIn} 0.5s ease-in-out;
+`;
+
+const Title = styled.h1`
+  text-align: center;
+  margin-bottom: 20px;
+`;
+
+const SelectContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+`;
+
+const Table = styled.table`
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  th {
+    background-color: #f4f4f4;
+  }
+`;
+
+const SubmitButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+`;
+
+const SubmitButton = styled.button`
+  background-color: #007bff;
+  color: white;
+  font-weight: bold;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #0056b3;
+  }
+`;
 
 const Dashboard = () => {
   const token = useSearchParams().get('token');
   const [userData, setUserData] = useState<JWTClaims | null>(null);
-  const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string }| null>(null);
-  const [students, setStudents] = useState<Array<GradebookColumnUser>>([]);
+  const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [courseId, setCourseId] = useState<string | null>(null);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -41,12 +106,6 @@ const Dashboard = () => {
     verifyAndFetchData();
   }, [token]);
 
-  useEffect(() => {
-    if (grades) {
-      console.log(`fetch students for ${grades.courseId}`);
-    }
-  }, [grades])
-
   const fetchGrades = async (token: string, courseCode: string) => {
     try {
       const response = await fetch('/api/grades/get', {
@@ -72,8 +131,8 @@ const Dashboard = () => {
   };
 
   return (
-    <div>
-      <h1>Dashboard</h1>
+    <Container>
+      <Title>Dashboard</Title>
       {error ? (
         <p>{error}</p>
       ) : (
@@ -88,30 +147,24 @@ const Dashboard = () => {
           </div>
         )
       )}
-    </div>
+    </Container>
   );
 };
 
 const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser> }) => {
   return (
-    <div className='flex flex-col items-center'>
-      <div className="box py-3">
-        <select id="block-grade-submission-populategrade" className="select custom-select menupopulategrade" name="populategrade">
+    <div>
+      <SelectContainer>
+        <select>
           <option selected={true} value="">Populate with overall grade...</option>
         </select>
-      </div>
-      <table className="table-auto border-separate border-spacing-2 border border-slate-500">
+      </SelectContainer>
+      <Table>
         <thead>
           <tr>
-            <th className='border border-slate-600'>
-              Name
-            </th>
-            <th className='border border-slate-600'>
-              Overall Grade
-            </th>
-            <th className='border border-slate-600'>
-              Final Grade
-            </th>
+            <th>Name</th>
+            <th>Overall Grade</th>
+            <th>Final Grade</th>
           </tr>
         </thead>
         <tbody>
@@ -125,10 +178,10 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
             />
           ))}
         </tbody>
-      </table>
-      <div className="mt-4">
-        <input type="submit" value="Submit Grades" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" />
-      </div>
+      </Table>
+      <SubmitButtonContainer>
+        <SubmitButton>Submit Grades</SubmitButton>
+      </SubmitButtonContainer>
     </div>
   );
 };
@@ -136,14 +189,14 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
 const StudentGradeRow = ({ studentName, userId, overallGrade, finalGrade }: { studentName: string; userId: string; overallGrade: number | undefined, finalGrade: number | undefined }) => {
   return (
     <tr>
-      <td className='border border-slate-700'>
+      <td>
         <input type="hidden" name="student" value={userId} />{studentName}
       </td>
-      <td className='border border-slate-700'>
-        {overallGrade || '-'}
+      <td>
+        {overallGrade !== undefined ? overallGrade : '-'}
       </td>
-      <td className='border border-slate-700'>
-        {finalGrade || "-"}
+      <td>
+        {finalGrade !== undefined ? finalGrade : "-"}
       </td>
     </tr>
   );
