@@ -54,6 +54,8 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
+    console.log('Course ID:', courseId)
+
     // Get overall grade and final grade column IDs
     const overallColumnId = await blackboard.getGradeColumnId(courseId, 'Overall Grade');
     const finalColumnId = await blackboard.getGradeColumnId(courseId, 'Final Grade');

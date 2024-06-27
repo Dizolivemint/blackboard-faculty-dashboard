@@ -192,9 +192,9 @@ class Blackboard {
     }
   }
 
-  public async getGradeColumnId(courseId: string, displayName: string): Promise<string | void> {
+  public async getGradeColumnId(courseId: string, name: string): Promise<string | void> {
     try {
-      const data = await this.getCourseGradeColumns({ courseId, displayName });
+      const data = await this.getCourseGradeColumns({ courseId, name });
       if (!data) {
         throw new Error("No grade columns found");
       }
