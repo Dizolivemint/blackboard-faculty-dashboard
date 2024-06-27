@@ -5,9 +5,9 @@ import Blackboard from '@/app/integrations/blackboard';
 const BB_API_URL = process.env.AUDIENCE || '';
 
 export async function POST(request: Request): Promise<Response> {
-  const { token, courseId } = await request.json();
+  const { token, userId } = await request.json();
 
-  if (!token || !courseId) {
+  if (!token || !userId) {
     return new Response(JSON.stringify({ message: 'Missing required parameters' }), {
       status: 400,
       headers: {
@@ -43,50 +43,17 @@ export async function POST(request: Request): Promise<Response> {
     const blackboard = Blackboard.getInstance();
     await blackboard.init();
 
-    // Get course ID
-    if (!courseId) {
-      return new Response(JSON.stringify({ message: 'Course ID not found' }), {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    const data = await blackboard.getUser(userId);
+
+    const user = {
+      id: data.id,
+      name: {
+        given: data.name.given,
+        family: data.name.family
+      }
     }
 
-    // Get overall grade and final grade column IDs
-    const overallColumnId = await blackboard.getGradeColumnId(courseId, 'Overall Grade');
-    const finalColumnId = await blackboard.getGradeColumnId(courseId, 'Final Grade');
-    
-    // Get overall grade and final grade column rows
-    if (!overallColumnId || !finalColumnId) {
-      return new Response(JSON.stringify({ message: 'Grade column ID not found' }), {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-    }
-    const overallResponse = await blackboard.getGradeColumnUsers(courseId, overallColumnId);
-    const finalResponse = await blackboard.getGradeColumnUsers(courseId, finalColumnId);
-
-    if (!overallResponse || !finalResponse) {
-      return new Response(JSON.stringify({ message: 'No grades found' }), {
-        status: 404,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-    }
-
-    const overall = overallResponse.results;
-    const final = finalResponse.results;
-
-    const grades = {
-      overall,
-      final
-    };
-
-    return new Response(JSON.stringify(grades), {
+    return new Response(JSON.stringify(user), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',

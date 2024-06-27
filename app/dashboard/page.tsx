@@ -79,6 +79,7 @@ const Dashboard = () => {
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [users, setUsers] = useState<Array<GradebookColumnUser>>([]);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -130,6 +131,30 @@ const Dashboard = () => {
     }
   };
 
+  const fetchUser = async (token: string, userId: string) => {
+    try {
+      const response = await fetch('/api/users/get', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token,
+          userId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      setUsers([...users, data]);
+    } catch (error) {
+      setError(`Error fetching user: ${error}`);
+    }
+  }
+
   return (
     <Container>
       <Title>Dashboard</Title>
@@ -171,8 +196,8 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
           {overallGrades.map((grade, index) => (
             <StudentGradeRow
               key={index}
-              studentName={grade.userId}
-              userId={grade.userId}
+              firstName={users.find(user => user.id === grade.userId)?.name.given}
+              lastName={users.find(user => user.id === grade.userId)?.name.family}
               overallGrade={grade.displayGrade?.score}
               finalGrade={finalGrades.find(finalGrade => finalGrade.userId === grade.userId)?.displayGrade?.score}
             />
@@ -186,11 +211,11 @@ const SubmitGrade = ({ overallGrades, finalGrades }: { overallGrades: Array<Grad
   );
 };
 
-const StudentGradeRow = ({ studentName, userId, overallGrade, finalGrade }: { studentName: string; userId: string; overallGrade: number | undefined, finalGrade: number | undefined }) => {
+const StudentGradeRow = ({ firstName, lastName, overallGrade, finalGrade }: { firstName: string; lastName: string; overallGrade: number | undefined, finalGrade: number | undefined }) => {
   return (
     <tr>
       <td>
-        <input type="hidden" name="student" value={userId} />{studentName}
+        <input type="hidden" name="student" value={name} />{firstName}&nbsp;{lastName}
       </td>
       <td>
         {overallGrade !== undefined ? overallGrade : '-'}

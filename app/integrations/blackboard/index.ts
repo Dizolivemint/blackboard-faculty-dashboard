@@ -7,7 +7,8 @@ import {
   TermsResponse,
   GradebookColumnsResponse,
   GradebookColumnUserUpdateResponse,
-  GradebookColumnUserResponse
+  GradebookColumnUserResponse,
+  UserResponse
 } from '@/app/models/blackboard';
 
 class Blackboard {
@@ -229,7 +230,6 @@ class Blackboard {
     return result;
   }
 
-  
   public async patchGradeColumnUsers(
     courseId: string,
     columnId: string,
@@ -242,12 +242,20 @@ class Blackboard {
         exempt: boolean;
         gradeNotationId: string;
     },
-    params: { fields?: string } = {}
+    params: { fields?: string } | null = null
   ): Promise<GradebookColumnUserUpdateResponse | void> {
     const queryString = params ? `?${qs.stringify(params)}` : ''
-    const url =`https://${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users/${userId}`
+    const url =`https://${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users/${userId}${queryString}`
     return this.fetchFromBlackboard(url, 'PATCH', input);
   }
+
+  public async getUser(userId: string, params: { fields?: string } | null = null): Promise<UserResponse> {
+    const { userId, fields } = params;
+    const queryString = fields ? `?fields=${fields}` : '';
+    const url = `https://${this.baseUrl}/learn/api/public/v1/users/${userId}${queryString}`;
+    return this.fetchFromBlackboard(url, 'GET');
+  }
+  
 }
 
 export default Blackboard;

@@ -193,3 +193,78 @@ export type GradebookColumnUserUpdateResponse = {
   firstRelevantDate: string;  // Date string
   lastRelevantDate: string;  // Date string
 }
+
+export interface UserResponse {
+  id: string;
+  uuid: string;
+  externalId: string;
+  dataSourceId: string;
+  userName: string;
+  studentId: string;
+  educationLevel: string; // 'K8' in example, can be other values
+  gender: string; // 'Female' in example, can be other values
+  pronouns: string;
+  birthDate: string; // ISO 8601 format date string
+  created: string; // ISO 8601 format date string
+  modified: string; // ISO 8601 format date string
+  lastLogin: string; // ISO 8601 format date string
+  institutionRoleIds: string[];
+  systemRoleIds: string[]; // e.g., 'SystemAdmin'
+  availability: {
+    available: string; // 'Yes' in example, can be other values
+  };
+  name: {
+    given: string;
+    family: string;
+    middle: string;
+    other: string;
+    suffix: string;
+    title: string;
+    preferredDisplayName: string; // e.g., 'GivenName'
+  };
+  job: {
+    title: string;
+    department: string;
+    company: string;
+  };
+  contact: {
+    homePhone: string;
+    mobilePhone: string;
+    businessPhone: string;
+    businessFax: string;
+    email: string;
+    institutionEmail: string;
+    webPage: string;
+  };
+  address: {
+    street1: string;
+    street2: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  locale: {
+    id: string;
+    calendar: string; // e.g., 'Gregorian'
+    firstDayOfWeek: string; // e.g., 'Sunday'
+  };
+  avatar: {
+    viewUrl: string;
+    source: string; // e.g., 'Default'
+    uploadId: string;
+    resourceId: string;
+  };
+  pronunciation: string;
+  nodes: {
+    id: string;
+    externalId: string;
+    title: string;
+    description: string;
+    parentId: string;
+  }[];
+  pronunciationAudio: {
+    viewUrl: string;
+    uploadId: string;
+  };
+}
