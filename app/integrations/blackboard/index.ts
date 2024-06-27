@@ -250,8 +250,7 @@ class Blackboard {
   }
 
   public async getUser(userId: string, params: { fields?: string } | null = null): Promise<UserResponse> {
-    const { userId, fields } = params;
-    const queryString = fields ? `?fields=${fields}` : '';
+    const queryString = params.fields ? `?fields=${fields}` : '';
     const url = `https://${this.baseUrl}/learn/api/public/v1/users/${userId}${queryString}`;
     return this.fetchFromBlackboard(url, 'GET');
   }
