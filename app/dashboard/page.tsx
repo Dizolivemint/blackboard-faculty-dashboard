@@ -64,7 +64,7 @@ const Table = styled.table`
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
-  margin-top: 20px;
+  margin: 20px 0;
 `;
 
 const Button = styled.button`
@@ -99,6 +99,17 @@ const ModalContainer = styled.div`
   border-radius: 10px;
   width: 300px;
   text-align: center;
+  & > h2 {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+  & > p {
+    margin-bottom: 10px;
+  }
+  & > hr {
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+  }
 `;
 
 const ModalButton = styled(Button)`
@@ -298,7 +309,8 @@ const Dashboard = () => {
         <ModalOverlay>
           <ModalContainer>
             <h2>Submit Grades Confirmation</h2>
-            <p>You cannot resubmit grades that you have already submitted.</p>
+            <hr/>
+            <p>Grades cannot be resubmitted.</p>
             <p>Are you sure you want to submit the grades?</p>
             <ModalButton onClick={handleSubmitGrades}>Submit</ModalButton>
             <RedButton onClick={() => setShowModal(false)}>Cancel</RedButton>
