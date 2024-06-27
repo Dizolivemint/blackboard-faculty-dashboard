@@ -27,6 +27,12 @@ const Container = styled.div`
   animation: ${fadeIn} 0.5s ease-in-out;
 `;
 
+const FlexContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
 const Title = styled.h1`
   text-align: center;
   margin-bottom: 20px;
@@ -54,13 +60,13 @@ const Table = styled.table`
   }
 `;
 
-const SubmitButtonContainer = styled.div`
+const ButtonContainer = styled.div`
   display: flex;
   justify-content: center;
   margin-top: 20px;
 `;
 
-const SubmitButton = styled.button`
+const Button = styled.button`
   background-color: #007bff;
   color: white;
   font-weight: bold;
@@ -74,6 +80,38 @@ const SubmitButton = styled.button`
   }
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const ModalContainer = styled.div`
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  width: 300px;
+  text-align: center;
+`;
+
+const ModalButton = styled(Button)`
+  margin: 10px;
+`;
+
+const RedButton = styled(ModalButton)`
+  background-color: #ff4c4c;
+
+  &:hover {
+    background-color: #d94444;
+  }
+`;
+
 const Dashboard = () => {
   const token = useSearchParams().get('token');
   const [userData, setUserData] = useState<JWTClaims | null>(null);
@@ -82,6 +120,7 @@ const Dashboard = () => {
   const [users, setUsers] = useState<{ [key: string]: UserResponse }>({});
   const [expireTime, setExpireTime] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -119,7 +158,7 @@ const Dashboard = () => {
         const currentTime = Math.floor(Date.now() / 1000);
         setTimeLeft(expireTime - currentTime);
         if (currentTime >= expireTime) {
-          setError('Access token has expired. Close this tab and relaunch the tool.');
+          setError('Access token has expired. To refresh, close and relaunch.');
           clearInterval(interval);
         }
       }, 1000);
@@ -180,36 +219,95 @@ const Dashboard = () => {
     }
   }
 
+  const handlePopulateFinalGrades = () => {
+    if (grades && grades.overall) {
+      const finalGrades = grades.overall.map(overallGrade => {
+        return {
+          ...overallGrade,
+          displayGrade: overallGrade.displayGrade,
+        };
+      });
+
+      setGrades(prevGrades => {
+        return prevGrades
+          ? {
+              ...prevGrades,
+              final: finalGrades,
+            }
+          : null;
+      });
+    }
+  }
+
+  const handleConfirmSubmit = () => {
+    setShowModal(true);
+  }
+
+  const handleSubmitGrades = async () => {
+    setShowModal(false);
+    if (grades && userData) {
+      try {
+        const response = await fetch('/api/grades/submit', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            token: localStorage.getItem('jwtToken'),
+            courseId: grades.courseId,
+            final: grades.final,
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Failed to submit grades: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log(data);
+      } catch (error) {
+        setError(`Error submitting grades: ${error}`);
+      }
+    }
+  }
+
   return (
     <Container>
-      <Title>Dashboard</Title>
+      <Title>Submit Grades</Title>
       {error ? (
         <p>{error}</p>
       ) : (
         userData && (
           <div>
-            <h1>Welcome 👋, {userData.name}</h1>
-            <p>Label: {userData.context.label}</p>
-            <p>Title: {userData.context.title}</p>
-            <p>Time left: {timeLeft}</p>
+            <FlexContainer>
+              <h1>Welcome 👋, {userData.name}</h1>
+              <p>{userData.context.title} | {userData.context.label}</p>
+            </FlexContainer>
             {grades && (
-              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users}/>
+              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users} onPopulateFinalGrades={handlePopulateFinalGrades} onConfirmSubmit={handleConfirmSubmit} />
             )}
           </div>
         )
+      )}
+      {showModal && (
+        <ModalOverlay>
+          <ModalContainer>
+            <p>Are you sure you want to submit the grades?</p>
+            <ModalButton onClick={handleSubmitGrades}>Submit</ModalButton>
+            <RedButton onClick={() => setShowModal(false)}>Cancel</RedButton>
+          </ModalContainer>
+        </ModalOverlay>
       )}
     </Container>
   );
 };
 
-const SubmitGrade = ({ overallGrades, finalGrades, users }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse } }) => {
+const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades, onConfirmSubmit }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse }, onPopulateFinalGrades: () => void, onConfirmSubmit: () => void }) => {
   return (
     <div>
-      <SelectContainer>
-        <select>
-          <option selected={true} value="">Populate with overall grade...</option>
-        </select>
-      </SelectContainer>
+      <ButtonContainer>
+        <Button onClick={onPopulateFinalGrades}>Populate with overall grade...</Button>
+      </ButtonContainer>
       <Table>
         <thead>
           <tr>
@@ -230,9 +328,9 @@ const SubmitGrade = ({ overallGrades, finalGrades, users }: { overallGrades: Arr
           ))}
         </tbody>
       </Table>
-      <SubmitButtonContainer>
-        <SubmitButton>Submit Grades</SubmitButton>
-      </SubmitButtonContainer>
+      <ButtonContainer>
+        <Button onClick={onConfirmSubmit}>Submit Grades</Button>
+      </ButtonContainer>
     </div>
   );
 };

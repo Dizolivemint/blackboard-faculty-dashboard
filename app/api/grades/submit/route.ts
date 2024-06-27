@@ -1,17 +1,15 @@
 import { verifyJwt } from '@/app/utils/jwt';
 import { ALLOWED_ROLES } from '@/app/config';
 import Blackboard from '@/app/integrations/blackboard';
-import { GradebookColumnUser } from '@/app/models/blackboard';
+import { GradebookColumnUserResponse, GradebookColumnUser } from '@/app/models/blackboard';
 
 const BB_API_URL = process.env.AUDIENCE || '';
 
 export async function POST(request: Request): Promise<Response> {
   const data = await request.json();
-  const { token, courseId } = data;
-  const final: Array<GradebookColumnUser> = data.final;
-  const overall: Array<GradebookColumnUser> = data.overall;
+  const { token, courseId, final } = data as { token: string; courseId: string; final: Array<GradebookColumnUser> };
 
-  if (!token || !final || !overall) {
+  if (!token || !final || !courseId) {
     return new Response(JSON.stringify({ message: 'Missing required parameters' }), {
       status: 400,
       headers: {
@@ -32,7 +30,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const payload = await verifyJwt(token);
 
-    const roles = payload['https://purl.imsglobal.org/spec/lti/claim/roles'] as Array<string>;
+    const roles = payload.roles as Array<string>;
     const hasAllowedRole = roles && roles.some(role => ALLOWED_ROLES.includes(role));
 
     if (!hasAllowedRole) {
@@ -43,9 +41,8 @@ export async function POST(request: Request): Promise<Response> {
         },
       });
     }
-
   } catch (error) {
-    return new Response(JSON.stringify({ message: 'Error verifying JWT token' }), {
+    return new Response(JSON.stringify({ message: 'Error verifying JWT token', error }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
@@ -56,28 +53,22 @@ export async function POST(request: Request): Promise<Response> {
   const blackboard = Blackboard.getInstance();
   await blackboard.init();
 
+  let columnId: string | void;
+  let finalResponse: GradebookColumnUserResponse | void;
+  let finalExisting: Array<GradebookColumnUser>;
+
   try {
-    for (const user of overall) {
-      // Only patch grades not in the final grade column
-      if (final.filter(finalGrade => finalGrade.userId === user.userId).length === 0) {
-        const { score, text, notes, feedback, exempt, gradeNotationId, columnId, userId } = user;
-        const finalGradeUpdateBody = {
-          text,
-          score,
-          notes,
-          feedback,
-          exempt,
-          gradeNotationId
-        }
-        // Update final grade
-        const response = await blackboard.patchGradeColumnUsers(courseId, columnId, userId, finalGradeUpdateBody);
-        if (!response) {
-          throw new Error('Error updating final grade');
-        }
-      }
+    columnId = await blackboard.getGradeColumnId(courseId, 'Final Grade');
+    if (!columnId) {
+      throw new Error('Error getting final grade column ID');
     }
+    finalResponse = await blackboard.getGradeColumnUsers(courseId, columnId);
+    if (!finalResponse) {
+      throw new Error('Error getting final grade column');
+    }
+    finalExisting = finalResponse.results;
   } catch (error) {
-    return new Response(JSON.stringify({ message: 'Error updating grades' }), {
+    return new Response(JSON.stringify({ message: 'Error getting final grade column', error }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
@@ -85,7 +76,34 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  
+  try {
+    for (const user of final) {
+      if (finalExisting.some((row) => row.userId === user.userId)) {
+        continue;
+      }
+      const { score, text, notes, feedback, exempt, gradeNotationId, userId } = user;
+      const finalGradeUpdateBody = {
+        text,
+        score,
+        notes,
+        feedback,
+        exempt,
+        gradeNotationId
+      };
+      // Update final grade
+      const response = await blackboard.patchGradeColumnUsers(courseId, columnId, userId, finalGradeUpdateBody);
+      if (!response) {
+        throw new Error('Error updating final grade');
+      }
+    }
+  } catch (error) {
+    return new Response(JSON.stringify({ message: 'Error updating grades', error }), {
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  }
 
   return new Response(JSON.stringify({ message: 'Success' }), {
     status: 200,
