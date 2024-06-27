@@ -28,7 +28,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const payload = await verifyJwt(token);
 
-    const roles = payload['https://purl.imsglobal.org/spec/lti/claim/roles'] as Array<string>;
+    const roles = payload.roles as Array<string>;
     const hasAllowedRole = roles && roles.some(role => ALLOWED_ROLES.includes(role));
 
     if (!hasAllowedRole) {
