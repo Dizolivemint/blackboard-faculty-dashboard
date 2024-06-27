@@ -7,6 +7,7 @@ import { JWTClaims } from '@/app/models/jwt';
 import { ALLOWED_ROLES } from '@/app/config';
 import { GradebookColumnUser, UserResponse } from '@/app/models/blackboard';
 import styled, { keyframes } from 'styled-components';
+import { Spinner, SpinnerContainer, LoadingText } from '@/app/components/spinner';
 
 const fadeIn = keyframes`
   from {
@@ -121,6 +122,8 @@ const Dashboard = () => {
   const [expireTime, setExpireTime] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -245,6 +248,7 @@ const Dashboard = () => {
 
   const handleSubmitGrades = async () => {
     setShowModal(false);
+    setIsSubmitting(true);
     if (grades && userData) {
       try {
         const response = await fetch('/api/grades/submit', {
@@ -269,6 +273,7 @@ const Dashboard = () => {
         setError(`Error submitting grades: ${error}`);
       }
     }
+    setIsSubmitting(false);
   }
 
   return (
@@ -284,7 +289,7 @@ const Dashboard = () => {
               <p>{userData.context.title} | {userData.context.label}</p>
             </FlexContainer>
             {grades && (
-              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users} onPopulateFinalGrades={handlePopulateFinalGrades} onConfirmSubmit={handleConfirmSubmit} />
+              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users} onPopulateFinalGrades={handlePopulateFinalGrades} onConfirmSubmit={handleConfirmSubmit} isSubmitted={isSubmitted}/>
             )}
           </div>
         )
@@ -292,17 +297,25 @@ const Dashboard = () => {
       {showModal && (
         <ModalOverlay>
           <ModalContainer>
+            <h2>Submit Grades Confirmation</h2>
+            <p>You cannot resubmit grades that you have already submitted.</p>
             <p>Are you sure you want to submit the grades?</p>
             <ModalButton onClick={handleSubmitGrades}>Submit</ModalButton>
             <RedButton onClick={() => setShowModal(false)}>Cancel</RedButton>
           </ModalContainer>
         </ModalOverlay>
       )}
+      {isSubmitting && (
+        <SpinnerContainer>
+          <Spinner />
+          <LoadingText>Submitting grades...</LoadingText>
+        </SpinnerContainer>
+      )}
     </Container>
   );
 };
 
-const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades, onConfirmSubmit }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse }, onPopulateFinalGrades: () => void, onConfirmSubmit: () => void }) => {
+const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades, onConfirmSubmit, isSubmitted }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse }, onPopulateFinalGrades: () => void, onConfirmSubmit: () => void, isSubmitted: boolean }) => {
   return (
     <div>
       <ButtonContainer>
@@ -329,7 +342,11 @@ const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades,
         </tbody>
       </Table>
       <ButtonContainer>
-        <Button onClick={onConfirmSubmit}>Submit Grades</Button>
+        {isSubmitted ? (
+          <p>Grades have been submitted.</p>
+        ) : ( 
+          <Button onClick={onConfirmSubmit}>Submit Grades</Button>
+        )}
       </ButtonContainer>
     </div>
   );
