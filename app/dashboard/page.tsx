@@ -129,7 +129,7 @@ const Dashboard = () => {
   const [userData, setUserData] = useState<JWTClaims | null>(null);
   const [grades, setGrades] = useState<{ overall: Array<GradebookColumnUser>; final: Array<GradebookColumnUser>; courseId: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<{ [key: string]: UserResponse }>({});
+  const [users, setUsers] = useState<{ [key: string]: UserResponse | { name: { family: string, given: string }}}>({});
   const [expireTime, setExpireTime] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -223,7 +223,7 @@ const Dashboard = () => {
       });
 
       if (response.status === 404) {
-        setUsers(prevUsers => ({ ...prevUsers, [userId]: { name: { given: userId, family: '' } } }));
+        setUsers(prevUsers => ({ ...prevUsers, [userId]: { name: { given: userId, family: '' }} }));
         return;
       }
 
@@ -328,7 +328,7 @@ const Dashboard = () => {
   );
 };
 
-const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades, onConfirmSubmit, isSubmitted }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse }, onPopulateFinalGrades: () => void, onConfirmSubmit: () => void, isSubmitted: boolean }) => {
+const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades, onConfirmSubmit, isSubmitted }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse | { name: { family: string, given: string }}}, onPopulateFinalGrades: () => void, onConfirmSubmit: () => void, isSubmitted: boolean }) => {
   return (
     <div>
       <ButtonContainer>
