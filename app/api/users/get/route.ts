@@ -45,7 +45,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const data = await blackboard.getUser(userId);
 
-    if (!data) {
+    if (!data.ok) {
       return new Response(JSON.stringify({ message: 'User not found' }), {
         status: 404,
         headers: {

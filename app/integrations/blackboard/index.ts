@@ -246,7 +246,7 @@ class Blackboard {
     return this.fetchFromBlackboard(url, 'PATCH', input);
   }
 
-  public async getUser(userId: string, params: { fields?: string } | null = null): Promise<UserResponse> {
+  public async getUser(userId: string, params: { fields?: string } | null = null): Promise<UserResponse | Response> {
     const queryString = params?.fields ? `?fields=${params.fields}` : '';
     const url = `https://${this.baseUrl}/learn/api/public/v1/users/${userId}${queryString}`;
     return this.fetchFromBlackboard(url, 'GET');
