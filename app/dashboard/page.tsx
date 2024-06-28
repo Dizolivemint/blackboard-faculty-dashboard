@@ -78,6 +78,10 @@ const Button = styled.button`
   &:hover {
     background-color: #0056b3;
   }
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+  }
 `;
 
 const ModalOverlay = styled.div`
