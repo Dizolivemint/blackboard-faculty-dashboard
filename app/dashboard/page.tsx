@@ -75,7 +75,6 @@ const Button = styled.button`
   border: none;
   border-radius: 5px;
   cursor: pointer;
-
   &:hover {
     background-color: #0056b3;
   }
@@ -135,6 +134,7 @@ const Dashboard = () => {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
+  const [isFinalized, setIsFinalized] = useState<boolean>(false);
 
   useEffect(() => {
     const verifyAndFetchData = async () => {
@@ -302,7 +302,7 @@ const Dashboard = () => {
               <p>{userData.context.title} | {userData.context.label}</p>
             </FlexContainer>
             {grades && (
-              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users} onPopulateFinalGrades={handlePopulateFinalGrades} onConfirmSubmit={handleConfirmSubmit} isSubmitted={isSubmitted}/>
+              <SubmitGrade overallGrades={grades.overall} finalGrades={grades.final} users={users} onPopulateFinalGrades={handlePopulateFinalGrades} onConfirmSubmit={handleConfirmSubmit} isSubmitted={isSubmitted} isFinalized={isFinalized}/>
             )}
           </div>
         )
@@ -329,7 +329,24 @@ const Dashboard = () => {
   );
 };
 
-const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades, onConfirmSubmit, isSubmitted }: { overallGrades: Array<GradebookColumnUser>, finalGrades: Array<GradebookColumnUser>, users: { [key: string]: UserResponse | { name: { family: string, given: string }}}, onPopulateFinalGrades: () => void, onConfirmSubmit: () => void, isSubmitted: boolean }) => {
+const SubmitGrade = (
+  { overallGrades, 
+    finalGrades, 
+    users, 
+    onPopulateFinalGrades, 
+    onConfirmSubmit, 
+    isSubmitted, 
+    isFinalized 
+  }: { 
+    overallGrades: Array<GradebookColumnUser>, 
+    finalGrades: Array<GradebookColumnUser>, 
+    users: { [key: string]: UserResponse | { name: { family: string, given: string }}}, 
+    onPopulateFinalGrades: () => void, 
+    onConfirmSubmit: () => void, 
+    isSubmitted: boolean, 
+    isFinalized: boolean 
+  }
+) => {
   return (
     <div>
       <ButtonContainer>
@@ -359,7 +376,7 @@ const SubmitGrade = ({ overallGrades, finalGrades, users, onPopulateFinalGrades,
         {isSubmitted ? (
           <p>Grades have been submitted.</p>
         ) : ( 
-          <Button onClick={onConfirmSubmit}>Submit Grades</Button>
+          <Button onClick={onConfirmSubmit} disabled={!isFinalized}>Submit Grades</Button>
         )}
       </ButtonContainer>
     </div>
