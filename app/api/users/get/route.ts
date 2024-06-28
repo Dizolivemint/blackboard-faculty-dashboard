@@ -1,6 +1,7 @@
 import { verifyJwt } from '@/app/utils/jwt';
 import { ALLOWED_ROLES } from '@/app/config';
 import Blackboard from '@/app/integrations/blackboard';
+import { UserResponse } from '@/app/models/blackboard';
 
 const BB_API_URL = process.env.AUDIENCE || '';
 
@@ -27,7 +28,6 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     const payload = await verifyJwt(token);
-
     const roles = payload.roles as Array<string>;
     const hasAllowedRole = roles && roles.some(role => ALLOWED_ROLES.includes(role));
 
@@ -45,7 +45,7 @@ export async function POST(request: Request): Promise<Response> {
 
     const data = await blackboard.getUser(userId);
 
-    if (!data.ok) {
+    if (isResponse(data) && !data.ok) {
       return new Response(JSON.stringify({ message: 'User not found' }), {
         status: 404,
         headers: {
@@ -54,15 +54,15 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
-    const user = {
-      id: data.id,
-      name: {
-        given: data.name.given,
-        family: data.name.family
-      }
-    }
+    const user = data as UserResponse;
 
-    return new Response(JSON.stringify(user), {
+    return new Response(JSON.stringify({
+      id: user.id,
+      name: {
+        given: user.name.given,
+        family: user.name.family
+      }
+    }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
@@ -77,4 +77,9 @@ export async function POST(request: Request): Promise<Response> {
       },
     });
   }
+}
+
+// Type guard to check if data is a Response
+function isResponse(data: any): data is Response {
+  return 'ok' in data;
 }
