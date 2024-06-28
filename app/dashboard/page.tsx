@@ -255,7 +255,7 @@ const Dashboard = () => {
             }
           : null;
       });
-      setIsPopulated(true);
+      setIsFinalized(true);
     }
   }
 
