@@ -280,12 +280,13 @@ const Dashboard = () => {
         }
 
         const data = await response.json();
-        console.log(data);
       } catch (error) {
         setError(`Error submitting grades: ${error}`);
+        return;
       }
     }
     setIsSubmitting(false);
+    setIsSubmitted(true);
   }
 
   return (
@@ -312,7 +313,7 @@ const Dashboard = () => {
             <h2>Submit Grades Confirmation</h2>
             <hr/>
             <p>Grades cannot be resubmitted.</p>
-            <p>Are you sure you want to submit the grades?</p>
+            <p>Are you sure you want to submit the final grades?</p>
             <ModalButton onClick={handleSubmitGrades}>Submit</ModalButton>
             <RedButton onClick={() => setShowModal(false)}>Cancel</RedButton>
           </ModalContainer>

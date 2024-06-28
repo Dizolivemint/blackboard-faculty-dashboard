@@ -246,7 +246,7 @@ class Blackboard {
         gradeNotationId: string;
     },
     params: { fields?: string } | null = null
-  ): Promise<GradebookColumnUserUpdateResponse | void> {
+  ): Promise<GradebookColumnUserUpdateResponse | Response> {
     const queryString = params ? `?${qs.stringify(params)}` : ''
     const url =`https://${this.baseUrl}/learn/api/public/v2/courses/${courseId}/gradebook/columns/${columnId}/users/${userId}${queryString}`
     return this.fetchFromBlackboard(url, 'PATCH', input);

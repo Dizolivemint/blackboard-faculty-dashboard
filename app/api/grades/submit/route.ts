@@ -92,7 +92,8 @@ export async function POST(request: Request): Promise<Response> {
       };
       // Update final grade
       const response = await blackboard.patchGradeColumnUsers(courseId, columnId, userId, finalGradeUpdateBody);
-      if (!response) {
+      console.log('Response', response)
+      if (isResponse(response) && !response.ok) {
         throw new Error('Error updating final grade');
       }
     }
@@ -111,4 +112,9 @@ export async function POST(request: Request): Promise<Response> {
       'Content-Type': 'application/json',
     },
   });
+}
+
+// Type guard to check if data is a Response
+function isResponse(data: any): data is Response {
+  return 'ok' in data;
 }
