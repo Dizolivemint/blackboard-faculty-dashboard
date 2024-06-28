@@ -222,8 +222,9 @@ const Dashboard = () => {
         }),
       });
 
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user: ${response.statusText}`);
+      if (response.status === 404) {
+        setUsers(prevUsers => ({ ...prevUsers, [userId]: { name: { given: userId, family: '' } } }));
+        return;
       }
 
       const data = await response.json();

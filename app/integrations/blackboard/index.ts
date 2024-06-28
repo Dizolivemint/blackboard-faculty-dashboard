@@ -71,9 +71,6 @@ class Blackboard {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-    }
     return response.json();
   }
 
