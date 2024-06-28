@@ -251,6 +251,7 @@ const Dashboard = () => {
             }
           : null;
       });
+      setIsPopulated(true);
     }
   }
 
