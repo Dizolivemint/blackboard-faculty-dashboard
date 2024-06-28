@@ -82,6 +82,7 @@ export async function POST(request: Request): Promise<Response> {
         continue;
       }
       const { score, text, notes, feedback, exempt, gradeNotationId, userId } = user;
+      if (score === 0) continue
       const finalGradeUpdateBody = {
         text,
         score,
