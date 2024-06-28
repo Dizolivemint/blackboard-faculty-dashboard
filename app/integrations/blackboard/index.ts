@@ -63,6 +63,7 @@ class Blackboard {
   }
 
   private async fetchFromBlackboard(url: string, method: string = 'GET', body?: any): Promise<any> {
+    
     const response = await fetch(url, {
       method,
       headers: {
@@ -71,6 +72,11 @@ class Blackboard {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
+
+    if (!response.ok) {
+      return response;
+    }
+
     return response.json();
   }
 
