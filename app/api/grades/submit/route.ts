@@ -81,7 +81,7 @@ export async function POST(request: Request): Promise<Response> {
 
   try {
     console.log('Starting grade updates. Number of users:', final.length);
-    for (const user of final) {
+    for await (const user of final) {
       console.log(`Processing user: ${user.userId}`);
 
       if (finalExisting.some((row) => row.userId === user.userId)) {
