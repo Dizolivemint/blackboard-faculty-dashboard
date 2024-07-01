@@ -84,7 +84,7 @@ export async function POST(request: Request): Promise<Response> {
       const { score, text, notes, feedback, exempt, gradeNotationId, userId } = user;
       if (!score || score === 0) continue
       const finalGradeUpdateBody = {
-        text,
+        text: text || calculateTextScore(score),
         score: score || user.displayGrade?.score,
         notes,
         feedback,
@@ -118,4 +118,15 @@ export async function POST(request: Request): Promise<Response> {
 // Type guard to check if data is a Response
 function isResponse(data: any): data is Response {
   return 'ok' in data;
+}
+
+function calculateTextScore(score: number): string {
+  if (score >= 93.5) return 'A';
+  if (score >= 89.5) return 'A-';
+  if (score >= 86.5) return 'B+';
+  if (score >= 83.5) return 'B';
+  if (score >= 79.5) return 'B-';
+  if (score >= 76.5) return 'C+';
+  if (score >= 69.5) return 'C';
+  return 'F';
 }
