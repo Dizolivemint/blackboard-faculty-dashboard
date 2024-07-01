@@ -85,7 +85,7 @@ export async function POST(request: Request): Promise<Response> {
       if (!score || score === 0) continue
       const finalGradeUpdateBody = {
         text,
-        score: user.displayGrade?.score || score,
+        score: score || user.displayGrade?.score,
         notes,
         feedback,
         exempt,
