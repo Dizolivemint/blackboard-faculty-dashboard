@@ -76,6 +76,7 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
+  const updateBodies: Array<any> = [];
   try {
     for (const user of final) {
       if (finalExisting.some((row) => row.userId === user.userId)) {
@@ -93,13 +94,19 @@ export async function POST(request: Request): Promise<Response> {
       };
       // Update final grade
       const response = await blackboard.patchGradeColumnUsers(courseId, columnId, userId, finalGradeUpdateBody);
-      console.log('Response', response)
+          
       if (isResponse(response) && !response.ok) {
+        throw new Error(response?.statusText);
+      }
+
+      if (!isResponse(response)) {
         throw new Error('Error updating final grade');
       }
+
+      updateBodies.push(finalGradeUpdateBody);
     }
   } catch (error) {
-    return new Response(JSON.stringify({ message: 'Error updating grades', error }), {
+    return new Response(JSON.stringify({ message: error }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
@@ -107,11 +114,11 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify({ message: 'Success' }), {
+  return new Response(JSON.stringify({ message: updateBodies }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-    },
+    }
   });
 }
 
