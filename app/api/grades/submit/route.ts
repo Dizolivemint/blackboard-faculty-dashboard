@@ -77,36 +77,63 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const updateBodies: Array<any> = [];
+  const errors: Array<{ userId: string; error: string }> = [];
+
   try {
-    for await (const user of final) {
+    console.log('Starting grade updates. Number of users:', final.length);
+    for (const user of final) {
+      console.log(`Processing user: ${user.userId}`);
+
       if (finalExisting.some((row) => row.userId === user.userId)) {
+        console.log(`User ${user.userId} already exists in finalExisting, skipping`);
         continue;
       }
+
       const { score, text, notes, feedback, exempt, gradeNotationId, userId } = user;
-      if ((!score || score === 0) && (!user.displayGrade?.score || user.displayGrade?.score === 0)) continue
+
+      if ((!score || score === 0) && (!user.displayGrade?.score || user.displayGrade?.score === 0)) {
+        console.log(`Skipping user ${userId}: score is ${score}, displayGrade.score is ${user.displayGrade?.score}`);
+        continue;
+      }
+
       const finalGradeUpdateBody = {
-        text: text || calculateTextScore(score),
+        text: text || calculateTextScore(score || user.displayGrade?.score || 0),
         score: score || user.displayGrade?.score,
         notes,
         feedback,
         exempt,
         gradeNotationId
       };
-      // Update final grade
-      const response = await blackboard.patchGradeColumnUsers(courseId, columnId, userId, finalGradeUpdateBody);
-          
-      if (isResponse(response) && !response.ok) {
-        throw new Error(response?.statusText);
-      }
 
-      if (!isResponse(response)) {
-        throw new Error('Error updating final grade');
-      }
+      console.log(`Updating grade for user ${userId}:`, finalGradeUpdateBody);
 
-      updateBodies.push(finalGradeUpdateBody);
+      try {
+        // Update final grade
+        const response = await blackboard.patchGradeColumnUsers(courseId, columnId, userId, finalGradeUpdateBody);
+
+        if (isResponse(response)) {
+          if (!response.ok) {
+            console.error(`Error updating grade for user ${userId}:`, response.statusText);
+            errors.push({ userId, error: response.statusText });
+          } else {
+            console.log(`Successfully updated grade for user ${userId}`);
+            updateBodies.push(finalGradeUpdateBody);
+          }
+        } else {
+          console.error(`Unexpected response type for user ${userId}`);
+          errors.push({ userId, error: 'Unexpected response type' });
+        }
+      } catch (updateError) {
+        const errorMessage = updateError instanceof Error ? updateError.message : String(updateError);
+        console.error(`Error updating grade for user ${userId}:`, errorMessage);
+        errors.push({ userId, error: errorMessage });
+      }
     }
+
+    console.log(`Finished processing. Total updates: ${updateBodies.length}, Total errors: ${errors.length}`);
   } catch (error) {
-    return new Response(JSON.stringify({ message: error }), {
+    console.error('Unexpected error in grade update process:', error);
+    return new Response(JSON.stringify({ message: 'Unexpected error in grade update process', error }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
@@ -114,7 +141,8 @@ export async function POST(request: Request): Promise<Response> {
     });
   }
 
-  return new Response(JSON.stringify({ message: updateBodies }), {
+  // Return both successful updates and errors
+  return new Response(JSON.stringify({ updates: updateBodies, errors }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
