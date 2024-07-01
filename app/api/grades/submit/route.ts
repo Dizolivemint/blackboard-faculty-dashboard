@@ -78,7 +78,7 @@ export async function POST(request: Request): Promise<Response> {
 
   const updateBodies: Array<any> = [];
   try {
-    for (const user of final) {
+    for await (const user of final) {
       if (finalExisting.some((row) => row.userId === user.userId)) {
         continue;
       }
