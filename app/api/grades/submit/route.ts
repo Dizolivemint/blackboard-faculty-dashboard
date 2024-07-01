@@ -83,7 +83,7 @@ export async function POST(request: Request): Promise<Response> {
         continue;
       }
       const { score, text, notes, feedback, exempt, gradeNotationId, userId } = user;
-      if ((!score || score === 0) && (user.displayGrade?.score || user.displayGrade?.score === 0)) continue
+      if ((!score || score === 0) && (!user.displayGrade?.score || user.displayGrade?.score === 0)) continue
       const finalGradeUpdateBody = {
         text: text || calculateTextScore(score),
         score: score || user.displayGrade?.score,
